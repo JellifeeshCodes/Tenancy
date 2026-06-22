@@ -460,7 +460,7 @@
   ::-webkit-scrollbar-track{ background:transparent; }
   ::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:6px; }
 
-  /* Login and Modern Settings Overlays */
+  /* Login and Settings Interface Layout overrides */
   .login-screen{
     position:fixed;
     inset:0;
@@ -627,16 +627,16 @@
 
 <div id="settingsModal" class="settings-modal">
   <div class="settings-box">
-    <h2>System Settings</h2>
+    <h2>System User Settings</h2>
     
     <h3>Active System Users</h3>
     <div id="userList"></div>
     
-    <h3>Create New User Account</h3>
+    <h3>Create New Account</h3>
     <div class="add-user-inputs">
       <input id="newUser" placeholder="Username" autocomplete="off">
       <input id="newPass" type="password" placeholder="Password">
-      <button id="addUserBtn" class="btn-primary" style="padding: 0 14px;">Add</button>
+      <button id="addUserBtn" class="btn-primary" style="padding: 0 14px;">Add User</button>
     </div>
 
     <div class="settings-footer">
@@ -1072,8 +1072,10 @@
 </script>
 
 <script>
+  // Hide main view securely until auth check complete
   document.querySelector('.app').style.display='none';
   
+  // Storage and User array declaration
   let users = JSON.parse(localStorage.getItem('tenancy_users')) || [{username:'admin', password:'admin'}];
   
   function saveUsers(){
@@ -1117,6 +1119,7 @@
   };
   
   window.addEventListener('load', () => {
+    // Session persistent layout rendering
     if(sessionStorage.getItem('loggedIn') === 'true'){
       document.getElementById('loginScreen').style.display = 'none';
       document.querySelector('.app').style.display = 'grid';
@@ -1133,6 +1136,7 @@
       }
     });
     
+    // Global Settings actions mapping
     document.getElementById('globalSettingsBtn')?.addEventListener('click', () => {
       renderUsers();
       settingsModal.style.display = 'flex';
