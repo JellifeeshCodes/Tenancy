@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tenancy Register</title>
+<style>
+  :root{
+    --paper:#F8FAFC;
+    --paper-deep:#EAF2F8;
+    --ink:#003B5C;
+    --ink-soft:#4A6475;
+    --sage:#0057A4;
+    --sage-pale:#DCEBFA;
+    --clay:#F2A900;
+    --clay-pale:#FFF3D6;
+    --line:#D8D2C2;
+    --line-strong:#B9B1A0;
+    --white:#FFFFFF;
+    --shadow: 0 1px 0 rgba(31,45,36,0.05);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family: "Iowan Old Style", "Source Serif Pro", Georgia, serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .sans{
+    font-family:"Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .mono{
+    font-family:"SF Mono","JetBrains Mono", Consolas, monospace;
+    letter-spacing:0.02em;
+  }
+
+  /* ---------- App shell ---------- */
+  .app{
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    height:100vh;
+    overflow:hidden;
+  }
+  @media (max-width: 860px){
+    .app{ grid-template-columns: 1fr; }
+    .index-pane{ display:none; }
+    .index-pane.show{ display:flex; }
+    .detail-pane.hide-mobile{ display:none; }
+  }
+
+  /* ---------- Index pane (left rail / file index) ---------- */
+  .index-pane{
+    background:var(--paper-deep);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    height:100%;
+  }
+
+  .brand{
+    padding:22px 20px 16px;
+    border-bottom:1px solid var(--line);
+    position: relative;
+  }
+  .brand-mark{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand-mark .tab{
+    width:10px;height:22px;
+    background:var(--clay);
+    border-radius:2px 5px 5px 2px;
+    flex-shrink:0;
+  }
+  .brand h1{
+    font-size:21px;
+    margin:0;
+    font-weight:600;
+    letter-spacing:0.01em;
+  }
+  .brand p.sans{
+    margin:4px 0 0 20px;
+    font-size:12px;
+    color:var(--ink-soft);
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+
+  .search-row{
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .search-row input{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line-strong);
+    border-radius:6px;
+    background:var(--white);
+    font-size:14px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  .search-row input:focus{
+    outline:2px solid var(--sage);
+    outline-offset:1px;
+    border-color:var(--sage);
+  }
+
+  .index-meta{
+    padding:10px 18px 4px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .index-meta span{
+    font-size:11px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .new-record-btn{
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:5px;
+    padding:7px 12px;
+    font-size:12.5px;
+    font-family:inherit;
+    cursor:pointer;
+    letter-spacing:0.02em;
+  }
+  .new-record-btn:hover{ background:var(--sage); }
+  .new-record-btn:focus-visible{ outline:2px solid var(--clay); outline-offset:2px; }
+
+  .record-list{
+    flex:1;
+    overflow-y:auto;
+    padding:6px 12px 18px;
+  }
+  .record-card{
+    position:relative;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:4px 8px 8px 4px;
+    margin:8px 0;
+    padding:11px 14px 11px 18px;
+    cursor:pointer;
+    transition:border-color .12s ease, transform .08s ease;
+  }
+  .record-card::before{
+    content:"";
+    position:absolute;
+    left:0; top:10px; bottom:10px;
+    width:4px;
+    background:var(--line-strong);
+    border-radius:2px;
+  }
+  .record-card:hover{ border-color:var(--sage); }
+  .record-card:focus-visible{ outline:2px solid var(--sage); outline-offset:1px; }
+  .record-card.active{
+    border-color:var(--sage);
+    background:var(--sage-pale);
+  }
+  .record-card.active::before{ background:var(--sage); }
+  .record-card.arrears::before{ background:var(--clay); }
+
+  .record-card .name{
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 2px;
+  }
+  .record-card .sub{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .record-card .tag-row{
+    display:flex;
+    gap:6px;
+    margin-top:6px;
+  }
+  .pill{
+    font-size:10.5px;
+    padding:2px 7px;
+    border-radius:20px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .pill.active{ background:var(--sage-pale); color:var(--sage); }
+  .pill.arrears{ background:var(--clay-pale); color:var(--clay); }
+  .pill.notice{ background:#EEE7D6; color:#8A6A1F; }
+
+  .empty-list{
+    padding:40px 20px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13.5px;
+  }
+
+  /* Index Pane Footer for Settings & Logout Elements */
+  .index-footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+    background: var(--paper-deep);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Foot Actions Formatting */
+  .global-settings-btn, .logout-btn {
+    background: none;
+    border: none;
+    font-size: 13.5px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Avenir Next", sans-serif;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+  }
+  .global-settings-btn:hover {
+    background: var(--sage-pale);
+    color: var(--sage);
+  }
+  .logout-btn:hover {
+    background: #fdf2f2;
+    color: #d9534f;
+  }
+
+  /* ---------- Detail pane ---------- */
+  .detail-pane{
+    height:100%;
+    overflow-y:auto;
+    background:var(--paper);
+  }
+  .detail-inner{
+    max-width:720px;
+    margin:0 auto;
+    padding:32px 36px 80px;
+  }
+
+  .mobile-back{
+    display:none;
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-family:inherit;
+    font-size:13px;
+    cursor:pointer;
+    padding:0 0 16px;
+  }
+  @media (max-width:860px){ .mobile-back{ display:inline-block; } }
+
+  .placeholder{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    color:var(--ink-soft);
+    text-align:center;
+    padding:40px;
+  }
+  .placeholder .tab-icon{
+    width:48px;height:60px;
+    background:var(--white);
+    border:1px solid var(--line-strong);
+    border-radius:2px 10px 10px 2px;
+    position:relative;
+    margin-bottom:18px;
+  }
+  .placeholder .tab-icon::before{
+    content:"";
+    position:absolute;
+    left:0;top:14px;bottom:14px;width:5px;
+    background:var(--line-strong);
+    border-radius:2px;
+  }
+  .placeholder h2{ font-size:18px; margin:0 0 6px; color:var(--ink); }
+  .placeholder p{ font-size:13.5px; margin:0; max-width:280px; }
+
+  .file-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:16px;
+    margin-bottom:24px;
+    gap:16px;
+  }
+  .file-head h2{
+    font-size:28px;
+    margin:0 0 4px;
+    line-height:1.1;
+  }
+  .file-head .ref{
+    color:var(--ink-soft);
+    font-size:13px;
+  }
+  .head-actions{
+    display:flex;
+    gap:8px;
+    flex-shrink:0;
+  }
+  .icon-btn{
+    background:var(--white);
+    border:1px solid var(--line-strong);
+    border-radius:5px;
+    padding:7px 12px;
+    font-size:12.5px;
+    font-family:"Avenir Next", sans-serif;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .icon-btn:hover{ border-color:var(--sage); color:var(--sage); }
+  .icon-btn.danger:hover{ border-color:var(--clay); color:var(--clay); }
+  .icon-btn:focus-visible{ outline:2px solid var(--sage); outline-offset:1px; }
+
+  .status-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+  }
+
+  .section-block{
+    margin-bottom:28px;
+  }
+  .section-block h3{
+    font-family:"Avenir Next", sans-serif;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--sage);
+    margin:0 0 12px;
+    padding-bottom:6px;
+    border-bottom:1px solid var(--line);
+  }
+
+  .field-grid{
+    display:grid;
+    grid-template-columns: repeat(2,1fr);
+    gap:14px 20px;
+  }
+  @media (max-width:560px){ .field-grid{ grid-template-columns:1fr; } }
+
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .field.full{ grid-column:1 / -1; }
+  .field label{
+    font-family:"Avenir Next", sans-serif;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-soft);
+  }
+  .field input, .field select, .field textarea{
+    border:1px solid var(--line-strong);
+    border-radius:5px;
+    padding:8px 10px;
+    font-family:"Avenir Next", sans-serif;
+    font-size:14px;
+    background:var(--white);
+    color:var(--ink);
+  }
+  .field textarea{ resize:vertical; min-height:64px; }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:2px solid var(--sage);
+    outline-offset:1px;
+    border-color:var(--sage);
+  }
+
+  /* household members */
+  .household-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .member-row{
+    display:grid;
+    grid-template-columns: 1fr 140px 110px 32px;
+    gap:8px;
+    align-items:center;
+  }
+  @media (max-width:560px){ .member-row{ grid-template-columns: 1fr; } }
+  .member-row input, .member-row select{
+    border:1px solid var(--line-strong);
+    border-radius:5px;
+    padding:7px 9px;
+    font-family:"Avenir Next", sans-serif;
+    font-size:13.5px;
+    background:var(--white);
+  }
+  .remove-member{
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    cursor:pointer;
+    font-size:16px;
+    width:32px;height:32px;
+    border-radius:5px;
+  }
+  .remove-member:hover{ color:var(--clay); background:var(--clay-pale); }
+  .add-member-btn{
+    align-self:flex-start;
+    margin-top:6px;
+    background:none;
+    border:1px dashed var(--line-strong);
+    border-radius:5px;
+    padding:7px 12px;
+    font-family:"Avenir Next", sans-serif;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .add-member-btn:hover{ border-color:var(--sage); color:var(--sage); }
+
+  .save-bar{
+    position:sticky;
+    bottom:0;
+    background:var(--paper);
+    border-top:1px solid var(--line);
+    margin:32px -36px -80px;
+    padding:16px 36px;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+  }
+  .save-bar .save-btn{
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:6px;
+    padding:10px 20px;
+    font-family:"Avenir Next", sans-serif;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .save-bar .save-btn:hover{ background:var(--sage); }
+  .save-bar .save-btn:focus-visible{ outline:2px solid var(--clay); outline-offset:2px; }
+  .save-confirm{
+    align-self:center;
+    font-family:"Avenir Next", sans-serif;
+    font-size:12.5px;
+    color:var(--sage);
+    opacity:0;
+    transition:opacity .2s;
+  }
+  .save-confirm.show{ opacity:1; }
+
+  select.status-select{
+    border:1px solid var(--line-strong);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+
+  ::-webkit-scrollbar{ width:10px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:6px; }
+
+  /* Login and Settings Interface Layout overrides */
+  .login-screen{
+    position:fixed;
+    inset:0;
+    background:var(--sage);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+    font-family: "Avenir Next", sans-serif;
+  }
+  .login-card{
+    background:#fff;
+    padding:40px 30px;
+    border-radius:12px;
+    width:360px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
+  .login-card h2 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    color: var(--ink);
+    text-align: center;
+  }
+  .login-card input {
+    padding: 10px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .login-card button {
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .login-card button:hover { background: var(--sage); }
+
+  .settings-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,59,92,0.4);
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+    backdrop-filter: blur(2px);
+    font-family: "Avenir Next", sans-serif;
+  }
+  .settings-box{
+    background:#fff;
+    padding:30px;
+    border-radius:10px;
+    width:480px;
+    max-width:95%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .settings-box h2 {
+    margin-top: 0;
+    font-size: 20px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 10px;
+    color: var(--ink);
+  }
+  .settings-box h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 20px 0 10px;
+    letter-spacing: 0.05em;
+  }
+  .user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .user-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .user-actions button {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    cursor: pointer;
+  }
+  .user-actions button.del-btn {
+    border-color: #d9534f;
+    color: #d9534f;
+  }
+  .user-actions button.del-btn:hover {
+    background: #fdf2f2;
+  }
+  .user-actions button:hover:not(.del-btn) {
+    border-color: var(--sage);
+    color: var(--sage);
+  }
+  .add-user-inputs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .add-user-inputs input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 5px;
+    font-size: 13px;
+  }
+  .settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+    border-top: 1px solid var(--line);
+    padding-top: 15px;
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .btn-primary:hover { background: var(--sage); }
+  .btn-secondary {
+    background: none;
+    border: 1px solid var(--line-strong);
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-left: 8px;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h2>Vinnies Tenancy Register</h2>
+    <input id="loginUser" placeholder="Username" autocomplete="off">
+    <input id="loginPass" type="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <div id="loginError" style="color:#d9534f; font-size:13px; text-align:center; font-weight:600;"></div>
+  </div>
+</div>
+
+<div id="settingsModal" class="settings-modal">
+  <div class="settings-box">
+    <h2>System User Settings</h2>
+    
+    <h3>Active System Users</h3>
+    <div id="userList"></div>
+    
+    <h3>Create New Account</h3>
+    <div class="add-user-inputs">
+      <input id="newUser" placeholder="Username" autocomplete="off">
+      <input id="newPass" type="password" placeholder="Password">
+      <button id="addUserBtn" class="btn-primary" style="padding: 0 14px;">Add User</button>
+    </div>
+
+    <div class="settings-footer">
+      <button id="closeSettings" class="btn-secondary">Close Settings</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <aside class="index-pane" id="indexPane">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="tab"></div>
+        <h1>Vinnies Tenancy Register</h1>
+      </div>
+      <p class="sans">Tenant records &amp; contact index</p>
+    </div>
+
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="Search name, property, or reference…" autocomplete="off">
+    </div>
+
+    <div class="index-meta sans">
+      <span id="countLabel">0 records</span>
+      <button class="new-record-btn" id="newRecordBtn">+ New tenant</button>
+    </div>
+
+    <div class="record-list" id="recordList"></div>
+
+    <div class="index-footer">
+      <button class="global-settings-btn" id="globalSettingsBtn" title="User Settings">⚙️ Settings</button>
+      <button class="logout-btn" id="logoutBtn" title="Sign out of system">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <main class="detail-pane" id="detailPane">
+    <div class="detail-inner" id="detailInner">
+      <div class="placeholder">
+        <div class="tab-icon"></div>
+        <h2>No file open</h2>
+        <p>Choose a tenant from the register on the left, or start a new tenant file.</p>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "tenancy_register_records_v1";
+
+  /* ---------- State ---------- */
+  let records = [];
+  let activeId = null;
+  let searchTerm = "";
+
+  /* ---------- Persistence ---------- */
+  function loadRecords(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        records = JSON.parse(raw);
+        return;
+      }
+    }catch(e){ console.warn("Could not read saved records", e); }
+    records = seedRecords();
+    persist();
+  }
+
+  function persist(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }catch(e){ console.warn("Could not save records", e); }
+  }
+
+  function seedRecords(){
+    return [
+      {
+        id: genId(),
+        ref: "TEN-1001",
+        name: "Marlene Ah Kuoi",
+        property: "12 Banksia St, Unit 3",
+        phone: "0412 334 556",
+        email: "marlene.ahkuoi@example.com",
+        status: "active",
+        moveIn: "2022-03-14",
+        household: [
+          { name:"Marlene Ah Kuoi", relation:"Primary", dob:"1979-05-02" },
+          { name:"Tomasi Ah Kuoi", relation:"Partner", dob:"1981-11-19" }
+        ],
+        nextOfKin: "Susan Ah Kuoi — 0498 221 003",
+        notes: "Prefers contact by phone after 4pm. Hot water service replaced Feb 2024."
+      },
+      {
+        id: genId(),
+        ref: "TEN-1002",
+        name: "David Okafor",
+        property: "4/88 Hartley Rd",
+        phone: "0433 991 220",
+        email: "d.okafor@example.com",
+        status: "arrears",
+        moveIn: "2021-09-01",
+        household: [
+          { name:"David Okafor", relation:"Primary", dob:"1990-02-21" }
+        ],
+        nextOfKin: "",
+        notes: "Payment plan agreed 03/06 — $40/fortnight in addition to rent."
+      },
+      {
+        id: genId(),
+        ref: "TEN-1003",
+        name: "Hien & Phuong Tran",
+        property: "21 Currawong Cres",
+        phone: "0405 778 213",
+        email: "",
+        status: "active",
+        moveIn: "2023-11-20",
+        household: [
+          { name:"Hien Tran", relation:"Primary", dob:"1985-07-30" },
+          { name:"Phuong Tran", relation:"Partner", dob:"1987-01-15" },
+          { name:"Mai Tran", relation:"Child", dob:"2016-04-09" }
+        ],
+        nextOfKin: "",
+        notes: ""
+      }
+    ];
+  }
+
+  function genId(){
+    return "r_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  }
+
+  /* ---------- Rendering: list ---------- */
+  const listEl = document.getElementById("recordList");
+  const countLabel = document.getElementById("countLabel");
+  const searchInput = document.getElementById("searchInput");
+  const detailInner = document.getElementById("detailInner");
+  const indexPane = document.getElementById("indexPane");
+  const detailPane = document.getElementById("detailPane");
+
+  function statusPillHtml(status){
+    if(status === "arrears") return '<span class="pill arrears">Arrears</span>';
+    if(status === "notice") return '<span class="pill notice">Notice</span>';
+    return '<span class="pill active">Active</span>';
+  }
+
+  function matchesSearch(r, term){
+    if(!term) return true;
+    const hay = (r.name + " " + r.property + " " + r.ref).toLowerCase();
+    return hay.includes(term.toLowerCase());
+  }
+
+  function renderList(){
+    const filtered = records.filter(r => matchesSearch(r, searchTerm));
+    countLabel.textContent = filtered.length + (filtered.length === 1 ? " record" : " records");
+
+    if(filtered.length === 0){
+      listEl.innerHTML = '<div class="empty-list">No matching tenant files.<br>Try a different search, or create a new tenant.</div>';
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(r => {
+      const arrearsClass = r.status === "arrears" ? " arrears" : "";
+      const activeClass = r.id === activeId ? " active" : "";
+      return `
+        <div class="record-card${arrearsClass}${activeClass}" data-id="${r.id}" tabindex="0" role="button" aria-label="Open file for ${escapeHtml(r.name)}">
+          <p class="name">${escapeHtml(r.name)}</p>
+          <p class="sub">${escapeHtml(r.property) || "No property on file"}</p>
+          <div class="tag-row">
+            ${statusPillHtml(r.status)}
+            <span class="pill" style="background:var(--paper-deep);color:var(--ink-soft);">${escapeHtml(r.ref)}</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    listEl.querySelectorAll(".record-card").forEach(card => {
+      card.addEventListener("click", () => openRecord(card.dataset.id));
+      card.addEventListener("keydown", (e) => {
+        if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openRecord(card.dataset.id); }
+      });
+    });
+  }
+
+  function escapeHtml(str){
+    if(!str) return "";
+    return str.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  /* ---------- Rendering: detail / edit form ---------- */
+  function openRecord(id){
+    activeId = id;
+    renderList();
+    renderDetail();
+    if(window.innerWidth <= 860){
+      indexPane.classList.remove("show");
+    }
+  }
+
+  function renderDetail(){
+    const record = records.find(r => r.id === activeId);
+    if(!record){
+      detailInner.innerHTML = `
+        <div class="placeholder">
+          <div class="tab-icon"></div>
+          <h2>No file open</h2>
+          <p>Choose a tenant from the register on the left, or start a new tenant file.</p>
+        </div>`;
+      return;
+    }
+
+    detailInner.innerHTML = `
+      <button class="mobile-back sans" id="backBtn">← Back to register</button>
+
+      <div class="file-head">
+        <div>
+          <h2 contenteditable="false" id="nameDisplay">${escapeHtml(record.name)}</h2>
+          <div class="ref mono">${escapeHtml(record.ref)}</div>
+        </div>
+        <div class="head-actions">
+          <button class="icon-btn danger sans" id="deleteBtn">Delete file</button>
+        </div>
+      </div>
+
+      <form id="recordForm">
+        <div class="section-block">
+          <h3>Tenancy status</h3>
+          <div class="field-grid">
+            <div class="field">
+              <label for="f_status">Status</label>
+              <select id="f_status" class="status-select">
+                <option value="active">Active</option>
+                <option value="arrears">Arrears</option>
+                <option value="notice">Notice given</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f_movein">Move-in date</label>
+              <input type="date" id="f_movein">
+            </div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <h3>Tenant &amp; contact details</h3>
+          <div class="field-grid">
+            <div class="field full">
+              <label for="f_name">Full name</label>
+              <input type="text" id="f_name" placeholder="e.g. Jordan Smith">
+            </div>
+            <div class="field full">
+              <label for="f_property">Property address</label>
+              <input type="text" id="f_property" placeholder="e.g. 12 Banksia St, Unit 3">
+            </div>
+            <div class="field">
+              <label for="f_phone">Phone</label>
+              <input type="tel" id="f_phone" placeholder="04xx xxx xxx">
+            </div>
+            <div class="field">
+              <label for="f_email">Email</label>
+              <input type="email" id="f_email" placeholder="name@example.com">
+            </div>
+            <div class="field full">
+              <label for="f_kin">Next of kin</label>
+              <input type="text" id="f_kin" placeholder="Name — phone number">
+            </div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <h3>Household members</h3>
+          <div class="household-list" id="householdList"></div>
+          <button type="button" class="add-member-btn" id="addMemberBtn">+ Add household member</button>
+        </div>
+
+        <div class="section-block">
+          <h3>Case notes</h3>
+          <div class="field-grid">
+            <div class="field full">
+              <label for="f_notes">Notes</label>
+              <textarea id="f_notes" placeholder="Contact preferences, agreements, maintenance history…"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="save-bar">
+          <span class="save-confirm sans" id="saveConfirm">Saved ✓</span>
+          <button type="submit" class="save-btn sans" id="saveBtn">Save changes</button>
+        </div>
+      </form>
+    `;
+
+    // Populate fields
+    document.getElementById("f_status").value = record.status || "active";
+    document.getElementById("f_movein").value = record.moveIn || "";
+    document.getElementById("f_name").value = record.name || "";
+    document.getElementById("f_property").value = record.property || "";
+    document.getElementById("f_phone").value = record.phone || "";
+    document.getElementById("f_email").value = record.email || "";
+    document.getElementById("f_kin").value = record.nextOfKin || "";
+    document.getElementById("f_notes").value = record.notes || "";
+
+    renderHousehold(record.household || []);
+
+    document.getElementById("backBtn")?.addEventListener("click", () => {
+      indexPane.classList.add("show");
+    });
+
+    document.getElementById("addMemberBtn").addEventListener("click", () => {
+      const list = currentHouseholdFromDom();
+      list.push({ name:"", relation:"Other", dob:"" });
+      renderHousehold(list);
+    });
+
+    document.getElementById("deleteBtn").addEventListener("click", () => {
+      if(confirm(`Delete the file for ${record.name}? This cannot be undone.`)){
+        records = records.filter(r => r.id !== record.id);
+        activeId = null;
+        persist();
+        renderList();
+        renderDetail();
+      }
+    });
+
+    document.getElementById("recordForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      saveRecord(record.id);
+    });
+  }
+
+  function renderHousehold(members){
+    const householdList = document.getElementById("householdList");
+    if(members.length === 0){
+      householdList.innerHTML = '<p class="sans" style="font-size:13px;color:var(--ink-soft);margin:0 0 4px;">No household members added yet.</p>';
+      return;
+    }
+    householdList.innerHTML = members.map((m, i) => `
+      <div class="member-row" data-index="${i}">
+        <input type="text" class="member-name" placeholder="Full name" value="${escapeHtml(m.name)}">
+        <select class="member-relation">
+          ${["Primary","Partner","Child","Dependent","Other"].map(opt =>
+            `<option value="${opt}" ${m.relation === opt ? "selected" : ""}>${opt}</option>`
+          ).join("")}
+        </select>
+        <input type="date" class="member-dob" value="${m.dob || ""}">
+        <button type="button" class="remove-member" aria-label="Remove household member" data-index="${i}">×</button>
+      </div>
+    `).join("");
+
+    householdList.querySelectorAll(".remove-member").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const list = currentHouseholdFromDom();
+        list.splice(parseInt(btn.dataset.index, 10), 1);
+        renderHousehold(list);
+      });
+    });
+  }
+
+  function currentHouseholdFromDom(){
+    return Array.from(document.querySelectorAll(".member-row")).map(row => ({
+      name: row.querySelector(".member-name").value.trim(),
+      relation: row.querySelector(".member-relation").value,
+      dob: row.querySelector(".member-dob").value
+    }));
+  }
+
+  function saveRecord(id){
+    const record = records.find(r => r.id === id);
+    if(!record) return;
+
+    record.status = document.getElementById("f_status").value;
+    record.moveIn = document.getElementById("f_movein").value;
+    record.name = document.getElementById("f_name").value.trim() || "Unnamed tenant";
+    record.property = document.getElementById("f_property").value.trim();
+    record.phone = document.getElementById("f_phone").value.trim();
+    record.email = document.getElementById("f_email").value.trim();
+    record.nextOfKin = document.getElementById("f_kin").value.trim();
+    record.notes = document.getElementById("f_notes").value.trim();
+    record.household = currentHouseholdFromDom().filter(m => m.name !== "");
+
+    persist();
+    renderList();
+
+    document.getElementById("nameDisplay").textContent = record.name;
+
+    const confirmEl = document.getElementById("saveConfirm");
+    confirmEl.classList.add("show");
+    setTimeout(() => confirmEl.classList.remove("show"), 1800);
+  }
+
+  /* ---------- New record ---------- */
+  document.getElementById("newRecordBtn").addEventListener("click", () => {
+    const nextNum = records.reduce((max, r) => {
+      const m = r.ref.match(/(\d+)$/);
+      return m ? Math.max(max, parseInt(m[1], 10)) : max;
+    }, 1000) + 1;
+
+    const newRecord = {
+      id: genId(),
+      ref: "TEN-" + nextNum,
+      name: "New tenant",
+      property: "",
+      phone: "",
+      email: "",
+      status: "active",
+      moveIn: "",
+      household: [],
+      nextOfKin: "",
+      notes: ""
+    };
+    records.unshift(newRecord);
+    persist();
+    activeId = newRecord.id;
+    renderList();
+    renderDetail();
+    if(window.innerWidth <= 860){ indexPane.classList.remove("show"); }
+    setTimeout(() => document.getElementById("f_name")?.focus(), 50);
+  });
+
+  /* ---------- Search ---------- */
+  searchInput.addEventListener("input", (e) => {
+    searchTerm = e.target.value;
+    renderList();
+  });
+
+  if(window.innerWidth <= 860){ indexPane.classList.add("show"); }
+
+  /* ---------- Init ---------- */
+  loadRecords();
+  renderList();
+  renderDetail();
+
+})();
+</script>
+
+<script>
+  // Hide main view securely until auth check complete
+  document.querySelector('.app').style.display='none';
+  
+  // Storage and User array declaration
+  let users = JSON.parse(localStorage.getItem('tenancy_users')) || [{username:'admin', password:'admin'}];
+  
+  function saveUsers(){
+    localStorage.setItem('tenancy_users', JSON.stringify(users));
+  }
+  
+  function renderUsers(){
+    let ul = document.getElementById('userList');
+    if(!ul) return;
+    ul.innerHTML = users.map((u, i) => `
+      <div class="user-item">
+        <strong>${u.username}</strong>
+        <div class="user-actions">
+          <button onclick="changePassword(${i})">Change Password</button>
+          <button class="del-btn" onclick="deleteUser(${i})">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  window.changePassword = function(i){
+    const newP = prompt(`Enter new password for account: ${users[i].username}`);
+    if(newP && newP.trim() !== "") {
+      users[i].password = newP.trim();
+      saveUsers();
+      alert("Password updated successfully.");
+      renderUsers();
+    }
+  };
+
+  window.deleteUser = function(i){
+    if(users.length <= 1) {
+      alert("Action Denied: System requires at least one active user account.");
+      return;
+    }
+    if(confirm(`Are you sure you want to completely remove user "${users[i].username}"?`)) {
+      users.splice(i, 1);
+      saveUsers();
+      renderUsers();
+    }
+  };
+  
+  window.addEventListener('load', () => {
+    // Session persistent layout rendering
+    if(sessionStorage.getItem('loggedIn') === 'true'){
+      document.getElementById('loginScreen').style.display = 'none';
+      document.querySelector('.app').style.display = 'grid';
+    }
+    
+    document.getElementById('loginBtn')?.addEventListener('click', () => {
+      const match = users.find(u => u.username === loginUser.value && u.password === loginPass.value);
+      if(match){
+        sessionStorage.setItem('loggedIn', 'true');
+        loginScreen.style.display = 'none';
+        document.querySelector('.app').style.display = 'grid';
+      } else {
+        loginError.textContent = 'Invalid username or password';
+      }
+    });
+    
+    // Global Settings actions mapping
+    document.getElementById('globalSettingsBtn')?.addEventListener('click', () => {
+      renderUsers();
+      settingsModal.style.display = 'flex';
+    });
+    
+    document.getElementById('closeSettings')?.addEventListener('click', () => {
+      settingsModal.style.display = 'none';
+    });
+    
+    // Logout Action Mapping
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      sessionStorage.removeItem('loggedIn');
+      window.location.reload();
+    });
+    
+    document.getElementById('addUserBtn')?.addEventListener('click', () => {
+      const usernameVal = newUser.value.trim();
+      const passwordVal = newPass.value.trim();
+      
+      if(usernameVal && passwordVal){
+        if(users.some(u => u.username.toLowerCase() === usernameVal.toLowerCase())) {
+          alert("Account creation failed: Username already exists.");
+          return;
+        }
+        users.push({username: usernameVal, password: passwordVal});
+        saveUsers();
+        renderUsers();
+        newUser.value = '';
+        newPass.value = '';
+      } else {
+        alert("Please provide both a username and password.");
+      }
+    });
+  });
+</script>
+</body>
+</html>
