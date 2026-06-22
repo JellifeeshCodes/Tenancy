@@ -201,28 +201,28 @@
     font-size:13.5px;
   }
 
-  /* Index Pane Footer for Settings Button */
+  /* Index Pane Footer for Settings & Logout Elements */
   .index-footer {
-    padding: 10px 18px;
+    padding: 10px 14px;
     border-top: 1px solid var(--line);
     background: var(--paper-deep);
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
   }
 
-  /* Global Settings Cog */
-  .global-settings-btn {
+  /* Foot Actions Formatting */
+  .global-settings-btn, .logout-btn {
     background: none;
     border: none;
-    font-size: 16px;
+    font-size: 13.5px;
     cursor: pointer;
     color: var(--ink-soft);
     padding: 6px 10px;
     border-radius: 6px;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-family: "Avenir Next", sans-serif;
     font-weight: 500;
     transition: background 0.15s, color 0.15s;
@@ -230,6 +230,10 @@
   .global-settings-btn:hover {
     background: var(--sage-pale);
     color: var(--sage);
+  }
+  .logout-btn:hover {
+    background: #fdf2f2;
+    color: #d9534f;
   }
 
   /* ---------- Detail pane ---------- */
@@ -676,7 +680,8 @@
     <div class="record-list" id="recordList"></div>
 
     <div class="index-footer">
-      <button class="global-settings-btn" id="globalSettingsBtn" title="User Settings">⚙️ System Settings</button>
+      <button class="global-settings-btn" id="globalSettingsBtn" title="User Settings">⚙️ Settings</button>
+      <button class="logout-btn" id="logoutBtn" title="Sign out of system">⚙️ Logout</button>
     </div>
   </aside>
 
@@ -1155,6 +1160,12 @@
     
     document.getElementById('closeSettings')?.addEventListener('click', () => {
       settingsModal.style.display = 'none';
+    });
+    
+    // Logout Action Mapping
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      sessionStorage.removeItem('loggedIn');
+      window.location.reload();
     });
     
     document.getElementById('addUserBtn')?.addEventListener('click', () => {
