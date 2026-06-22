@@ -39,13 +39,13 @@
 
   /* ---------- App shell ---------- */
   .app{
-    display:grid;
+    display:none; /* Controlled via script */
     grid-template-columns: 360px 1fr;
     height:100vh;
     overflow:hidden;
   }
   @media (max-width: 860px){
-    .app{ grid-template-columns: 1fr; }
+    .app[style*="display: grid"] { grid-template-columns: 1fr !important; }
     .index-pane{ display:none; }
     .index-pane.show{ display:flex; }
     .detail-pane.hide-mobile{ display:none; }
@@ -437,13 +437,105 @@
   ::-webkit-scrollbar-track{ background:transparent; }
   ::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:6px; }
 
-.login-screen{position:fixed;inset:0;background:#0057A4;display:flex;align-items:center;justify-content:center;z-index:9999}.login-card{background:#fff;padding:30px;border-radius:12px;width:340px;display:flex;flex-direction:column;gap:10px}.settings-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:10000}.settings-box{background:#fff;padding:20px;border-radius:10px;width:500px;max-width:90%}</style>
+  .login-screen{
+    position:fixed;
+    inset:0;
+    background:#0057A4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+  }
+  .login-card{
+    background:#fff;
+    padding:30px;
+    border-radius:12px;
+    width:340px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .login-card h2 {
+    margin-top: 0;
+    font-family:"Avenir Next", sans-serif;
+    font-size: 20px;
+    color: var(--ink);
+  }
+  .login-card input {
+    padding: 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+  }
+  .login-card button {
+    background: var(--ink);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .settings-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+  }
+  .settings-box{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    width:500px;
+    max-width:90%;
+  }
+  .settings-box h2 {
+    margin-top: 0;
+    font-family: "Avenir Next", sans-serif;
+  }
+  #userList div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  #userList button {
+    background: none;
+    border: 1px solid var(--line-strong);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+</style>
 </head>
-<body><div id="loginScreen" class="login-screen"><div class="login-card"><h2>Vinnies Tenancy Register</h2><input id="loginUser" placeholder="Username"><input id="loginPass" type="password" placeholder="Password"><button id="loginBtn">Login</button><div id="loginError" style="color:red"></div></div></div><div id="settingsModal" class="settings-modal"><div class="settings-box"><h2>User Management</h2><div id="userList"></div><input id="newUser" placeholder="Username"><br><br><input id="newPass" type="password" placeholder="Password"><br><br><button id="addUserBtn">Add User</button> <button id="closeSettings">Close</button></div></div>
+<body>
 
-<div class="app">
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h2>Vinnies Tenancy Register</h2>
+    <input id="loginUser" placeholder="Username">
+    <input id="loginPass" type="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <div id="loginError" style="color:red; font-size: 13px; font-family: sans-serif;"></div>
+  </div>
+</div>
 
-  <!-- INDEX PANE -->
+<div id="settingsModal" class="settings-modal">
+  <div class="settings-box">
+    <h2>User Management</h2>
+    <div id="userList"></div>
+    <br>
+    <input id="newUser" placeholder="Username" style="padding: 6px; border: 1px solid var(--line-strong); border-radius:4px;">
+    <input id="newPass" type="password" placeholder="Password" style="padding: 6px; border: 1px solid var(--line-strong); border-radius:4px;">
+    <button id="addUserBtn" style="padding: 6px 12px; background: var(--ink); color: white; border: none; border-radius:4px; cursor: pointer;">Add User</button> 
+    <button id="closeSettings" style="padding: 6px 12px; background: none; border: 1px solid var(--line-strong); border-radius:4px; cursor: pointer;">Close</button>
+  </div>
+</div>
+
+<div class="app" id="appShell">
+
   <aside class="index-pane" id="indexPane">
     <div class="brand">
       <div class="brand-mark">
@@ -465,7 +557,6 @@
     <div class="record-list" id="recordList"></div>
   </aside>
 
-  <!-- DETAIL PANE -->
   <main class="detail-pane" id="detailPane">
     <div class="detail-inner" id="detailInner">
       <div class="placeholder">
@@ -571,7 +662,6 @@
   const searchInput = document.getElementById("searchInput");
   const detailInner = document.getElementById("detailInner");
   const indexPane = document.getElementById("indexPane");
-  const detailPane = document.getElementById("detailPane");
 
   function statusPillHtml(status){
     if(status === "arrears") return '<span class="pill arrears">Arrears</span>';
@@ -652,7 +742,8 @@
           <h2 contenteditable="false" id="nameDisplay">${escapeHtml(record.name)}</h2>
           <div class="ref mono">${escapeHtml(record.ref)}</div>
         </div>
-        <div class="head-actions"><button class="icon-btn sans" id="settingsBtn">Settings</button>
+        <div class="head-actions">
+          <button class="icon-btn sans" id="settingsBtn">Settings</button>
           <button class="icon-btn danger sans" id="deleteBtn">Delete file</button>
         </div>
       </div>
@@ -870,6 +961,90 @@
 })();
 </script>
 
+<script>
+(function() {
+  "use strict";
 
-<script>document.querySelector('.app').style.display='none';let users=JSON.parse(localStorage.getItem('tenancy_users'))||[{username:'admin',password:'admin'}];function saveUsers(){localStorage.setItem('tenancy_users',JSON.stringify(users));}function renderUsers(){let ul=document.getElementById('userList');if(!ul)return;ul.innerHTML=users.map((u,i)=>`<div>${u.username} <button onclick="changePassword(${i})">Change Password</button></div>`).join('');}window.changePassword=function(i){const p=prompt('New password');if(p){users[i].password=p;saveUsers();renderUsers();}};window.addEventListener('load',()=>{if(sessionStorage.getItem('loggedIn')==='true'){document.getElementById('loginScreen').style.display='none';document.querySelector('.app').style.display='grid';}document.getElementById('loginBtn')?.addEventListener('click',()=>{const m=users.find(u=>u.username===loginUser.value&&u.password===loginPass.value);if(m){sessionStorage.setItem('loggedIn','true');loginScreen.style.display='none';document.querySelector('.app').style.display='grid';}else loginError.textContent='Invalid username or password';});document.addEventListener('click',e=>{if(e.target&&e.target.id==='settingsBtn'){renderUsers();settingsModal.style.display='flex';}if(e.target&&e.target.id==='closeSettings'){settingsModal.style.display='none';}if(e.target&&e.target.id==='addUserBtn'){if(newUser.value&&newPass.value){users.push({username:newUser.value,password:newPass.value});saveUsers();renderUsers();newUser.value='';newPass.value='';}}});});</script></body>
+  let users = JSON.parse(localStorage.getItem('tenancy_users')) || [{username:'admin', password:'admin'}];
+
+  function saveUsers() {
+    localStorage.setItem('tenancy_users', JSON.stringify(users));
+  }
+
+  function renderUsers() {
+    let ul = document.getElementById('userList');
+    if(!ul) return;
+    ul.innerHTML = users.map((u, i) => `
+      <div>
+        <span><strong>${u.username}</strong></span> 
+        <button data-index="${i}" class="change-password-btn">Change Password</button>
+      </div>
+    `).join('');
+    
+    ul.querySelectorAll('.change-password-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = e.target.dataset.index;
+        const p = prompt('New password');
+        if(p) {
+          users[idx].password = p;
+          saveUsers();
+          renderUsers();
+        }
+      });
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginUser = document.getElementById('loginUser');
+    const loginPass = document.getElementById('loginPass');
+    const loginError = document.getElementById('loginError');
+    const settingsModal = document.getElementById('settingsModal');
+    const newUser = document.getElementById('newUser');
+    const newPass = document.getElementById('newPass');
+
+    // Handle initial layout visibility securely
+    if (sessionStorage.getItem('loggedIn') === 'true') {
+      loginScreen.style.display = 'none';
+      appShell.style.display = 'grid';
+    } else {
+      appShell.style.display = 'none';
+    }
+
+    loginBtn?.addEventListener('click', () => {
+      const m = users.find(u => u.username === loginUser.value && u.password === loginPass.value);
+      if(m) {
+        sessionStorage.setItem('loggedIn', 'true');
+        loginScreen.style.display = 'none';
+        appShell.style.display = 'grid';
+      } else {
+        loginError.textContent = 'Invalid username or password';
+      }
+    });
+
+    // Delegated click interactions to catch dynamic detail pane generation
+    document.addEventListener('click', e => {
+      if (e.target && e.target.id === 'settingsBtn') {
+        renderUsers();
+        settingsModal.style.display = 'flex';
+      }
+      if (e.target && e.target.id === 'closeSettings') {
+        settingsModal.style.display = 'none';
+      }
+      if (e.target && e.target.id === 'addUserBtn') {
+        if(newUser.value && newPass.value) {
+          users.push({username: newUser.value, password: newPass.value});
+          saveUsers();
+          renderUsers();
+          newUser.value = '';
+          newPass.value = '';
+        }
+      }
+    });
+  });
+})();
+</script>
+</body>
 </html>
